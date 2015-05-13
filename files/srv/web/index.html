@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SaltStack Beacon and reactors!!</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+<style type="text/css">
+    .bs-example{
+        margin: 20px;
+    }
+</style>
+
+<script>
+    // Required Salt config:
+    // external_auth:
+    //   auto:
+    //     'beacon_demo': []
+    // 
+    // rest_cherrypy:
+    //   port: 8000
+    //   disable_ssl: True
+    //   app_path : /beacon_demo
+    //   app: /path/to/this_file.html
+
+    // Lightweight string interpolation shim
+    // http://javascript.crockford.com/remedial.html
+    if (!String.prototype.supplant) {
+        String.prototype.supplant = function (o) {
+            return this.replace(/\{([^{}]*)\}/g, function (a, b) { var r = o[b]; return typeof r === 'string' || typeof r === 'number' ? r : a; });
+        };
+    }
+
+    // Start listening to the Salt event stream.
+    var stream = new EventSource('/events');
+
+    // Wait until the DOM is ready and then start appending messages.
+    jQuery(document).ready(function($) {
+        var messages_div = $('.bs-example');
+        var messages_tmpl = $('#bs-tmpl').html();
+        var default_image = 'http://saltconf.com/wp-content/uploads/2014/11/Logo_4C1.png';
+
+        // Append message on each beacon Salt event. Test with:
+        // salt-call event.send dave/rocks/beacons image=dave.jpg phone=801-555-1212 body=daverocks
+        stream.onmessage = function(e) {
+            var sevent = JSON.parse(e.data);
+
+            // Ignore non-Twilio events.
+            if (sevent.tag.search(/twilio_txt_msg\/$/) === -1) { return }
+            // Add error-checking or default values here.
+            sevent.data.data.texts.forEach(function(elem, idx, text_array) {
+                messages_div.prepend(messages_tmpl.supplant({
+                    body: elem.body,
+                    phone: elem.from,
+                    image: elem.images.length > 0 ? elem.images[0] : default_image,
+                    timestamp: elem.sent,
+                }));
+            });
+        };
+
+        // Show a basic login form if we can't connect to the stream.
+        // Hit the back button after authenticating.
+        stream.onerror = function (e) {
+            if (stream.readyState === 2) {
+                $('body').prepend('<form action="/login" method="post"><input name="username" placeholder="username"><input name="password" type="password" placeholder="password"><input name="eauth" placeholder="eauth"><button type="submit">Submit</button></form>');
+                $('form').submit(function(ev) {
+                    ev.preventDefault();
+
+                    var form = this;
+
+                    $.ajax({
+                        url: form.action,
+                        method: form.method,
+                        accepts: 'application/json',
+                        data: $(this).serialize(),
+                    }).success(function(ret) {
+                        location.reload();
+                    });
+                });
+            }
+        };
+    });
+</script>
+
+</head>
+<body>
+    <div>
+        <img src="http://saltconf.com/wp-content/uploads/2014/11/Logo_4C1.png" alt="Sample Image">
+    </div><div><h1>801-285-9749</h1></div>
+<div class="bs-example">
+
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="https://api.twilio.com/2010-04-01/Accounts/AC5698300fe4570811c9cced3a8f7ab37e/Messages/MM8de188b6bd3dbbe6762dbf21eea1c957/Media/MEa0ba019248ed08ace873c6a8d5f8216d" class="media-object img-rounded" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18015644673<small><i>Sent on 2015-02-24 20:32:52</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; "></span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="https://api.twilio.com/2010-04-01/Accounts/AC5698300fe4570811c9cced3a8f7ab37e/Messages/MM88068761f9bb8120843f058d6a315d22/Media/MEd6103e8362ff12a75e458917209c2695" class="media-object img-rounded" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+16307795084<small><i>Sent on 2015-02-24 20:32:33</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; "></span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="http://saltconf.com/wp-content/uploads/2014/11/Logo_4C1.png" class="media-object" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18015644673<small><i>Sent on 2015-02-24 20:32:22</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">Test message</span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="https://api.twilio.com/2010-04-01/Accounts/AC5698300fe4570811c9cced3a8f7ab37e/Messages/MM8d1735a06104d5646c43d00e58dd3a52/Media/ME05158e58c46d1160366fbe79d6375282" class="media-object img-rounded" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18013690964<small><i>Sent on 2015-02-24 20:32:01</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">you watching me?</span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="http://saltconf.com/wp-content/uploads/2014/11/Logo_4C1.png" class="media-object" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18014487384<small><i>Sent on 2015-02-24 20:31:51</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">Stuff things.</span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="https://api.twilio.com/2010-04-01/Accounts/AC5698300fe4570811c9cced3a8f7ab37e/Messages/MMc783e0426a8c86936ceca5da175272c8/Media/ME6b65c969f1bf11fbd17fcced2cffe1d5" class="media-object img-rounded" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18019998328<small><i>Sent on 2015-02-24 20:31:48</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; "></span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="http://saltconf.com/wp-content/uploads/2014/11/Logo_4C1.png" class="media-object" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18019199719<small><i>Sent on 2015-02-24 20:31:34</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">Include me please</span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="https://api.twilio.com/2010-04-01/Accounts/AC5698300fe4570811c9cced3a8f7ab37e/Messages/MM3478ada4dec5fd7c31b274b47fc79b8c/Media/ME08132090f2841233437b1059b7667eac" class="media-object img-rounded" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18014044448<small><i>Sent on 2015-02-24 20:31:29</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; "></span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="http://saltconf.com/wp-content/uploads/2014/11/Logo_4C1.png" class="media-object" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18014044448<small><i>Sent on 2015-02-24 20:31:12</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">Hey</span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="https://api.twilio.com/2010-04-01/Accounts/AC5698300fe4570811c9cced3a8f7ab37e/Messages/MMc69b5c9e23ec33cef6a8c32e5b40d1ec/Media/MEa9930b02c56de96edea72fe432de06eb" class="media-object img-rounded" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18018301117<small><i>Sent on 2015-02-24 20:12:21</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">Check it out!</span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="http://saltconf.com/wp-content/uploads/2014/11/Logo_4C1.png" class="media-object" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18017013570<small><i>Sent on 2015-02-24 17:35:04</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">Thanks for the message. Configure your number's SMS URL to change this message.Reply HELP for help.Reply STOP to unsubscribe.Msg&Data rates may apply.</span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="https://api.twilio.com/2010-04-01/Accounts/AC5698300fe4570811c9cced3a8f7ab37e/Messages/MM18639f803b67ca97ca8dccd59948c9c2/Media/MEc51fe82a59f54afa20ce02d92833aedd" class="media-object img-rounded" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18018301117<small><i>Sent on 2015-02-24 17:35:04</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">Here's a picture!</span></strong></p>
+        </div>
+    </div>
+    <hr />
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="http://saltconf.com/wp-content/uploads/2014/11/Logo_4C1.png" class="media-object" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">+18017013570<small><i>Sent on 2015-02-24 17:19:34</i></small></h4>
+            <p><strong><span style="font-size: 18px !important; ">hello, this works!</span></strong></p>
+        </div>
+    </div>
+    <hr />
+</div>
+
+<script type="text/html" id="bs-tmpl">
+    <div class="media">
+        <a href="#" class="pull-left">
+            <img src="{image}" class="media-object img-rounded" alt="Sample Image" height="200" width="200">
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">{phone}<small><i>Sent on {timestamp}</i></small></h4>
+            <p>{body}</p>
+        </div>
+    </div>
+    <hr />
+</script>
+
+</body>
+</html>
